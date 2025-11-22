@@ -1,5 +1,6 @@
 pipeline {
     agent any
+<<<<<<< HEAD
     environment {
         AWS_REGION = "us-east-1"
         ECR_REPO = 
@@ -14,12 +15,28 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/pichuka123/real_time_ci_cdelivery_ansible.git'
             }
         }
+=======
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out source code'
+                git branch: 'main', url: 'https://github.com/devopstraininghub/REALTIMEPROJECT.git'
+            }
+        }
+
+>>>>>>> 69021f93c4f94309fb39b4924c235ea97aeaccbf
         stage('Build Jar') {
             steps {
                 echo 'Running Maven build'
                 sh 'cd Application && mvn clean package'
             }
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 69021f93c4f94309fb39b4924c235ea97aeaccbf
         stage('Sonar Scan') {
             steps {
                 echo 'Running SonarQube scan'
@@ -31,10 +48,15 @@ pipeline {
                 '''
             }
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 69021f93c4f94309fb39b4924c235ea97aeaccbf
         stage('Build Docker Image') {
             steps {
                 script {
                     echo 'Building Docker Image'
+<<<<<<< HEAD
                     sh 'cd Application && docker build -t princecharu/my_app:${BUILD_NUMBER} .'
                 }
             }
@@ -61,21 +83,54 @@ pipeline {
                     docker push ${ECR_REPO}:latest
                     docker push ${ECR_REPO}:${BUILD_NUMBER}
                 '''
+=======
+                    sh 'cd Application && docker build -t devopshubg333/k8s:${BUILD_NUMBER} .'
+                }
+            }
+        }
+
+        stage('Docker Image Scan') {
+            steps {
+                sh 'trivy image devopshubg333/k8s:${BUILD_NUMBER}'
+            }
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) {
+                        sh 'echo "${dockerhub}" | docker login -u devopshubg333 --password-stdin'
+                    }
+                    sh 'docker push devopshubg333/k8s:${BUILD_NUMBER}'
+                }
+>>>>>>> 69021f93c4f94309fb39b4924c235ea97aeaccbf
             }
         }
 
         stage('Update Kubernetes Deployment Manifest File') {
             environment {
+<<<<<<< HEAD
                 GIT_REPO_NAME = "real_time_ci_cdelivery_ansible"
                 GIT_USER_NAME = "pichuka123"
+=======
+                GIT_REPO_NAME = "REALTIMEPROJECT"
+                GIT_USER_NAME = "devopstraininghub"
+>>>>>>> 69021f93c4f94309fb39b4924c235ea97aeaccbf
             }
             steps {
                 withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                     sh '''
+<<<<<<< HEAD
                         git config user.email "prince.charu7@gmail.com"
                         git config user.name "pichuka123"
 
                         sed -i "s|my_app:.*|my_app:${BUILD_NUMBER}|g" Ansible/k8s_deployment.yaml
+=======
+                        git config user.email "madhu@gmail.com"
+                        git config user.name "madhu"
+
+                        sed -i "s|k8s:.*|k8s:${BUILD_NUMBER}|g" Ansible/k8s_deployment.yaml
+>>>>>>> 69021f93c4f94309fb39b4924c235ea97aeaccbf
 
                         git add .
                         git commit -m "Update deployment image tag to version ${BUILD_NUMBER}"
