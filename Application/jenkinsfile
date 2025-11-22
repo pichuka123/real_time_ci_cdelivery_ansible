@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+    environment {
+        AWS_REGION = "us-east-1"
+        ECR_REPO = 
+        IMAGE = my_app
+        
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out source code'
+                git branch: 'main', url: 'https://github.com/pichuka123/real_time_ci_cdelivery_ansible.git'
+            }
+        }
+        stage('Build Jar') {
+            steps {
+                echo 'Running Maven build'
+                sh 'cd Application && mvn clean package'
+            }
+        }
+        stage('Sonar Scan') {
+            steps {
+                echo 'Running SonarQube scan'
+                sh '''
+                    cd Application
+                    mvn sonar:sonar \
+                      -Dsonar.host.url=http://44.203.120.255:9000 \
+                      -Dsonar.login=squ_857bc378b399cc95305af238a1c3f0e10e243415
+                '''
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo 'Building Docker Image'
+                    sh 'cd Application && docker build -t princecharu/my_app:${BUILD_NUMBER} .'
+                }
+            }
+        }
+        stage('Docker Image Scan') {
+            steps {
+                sh 'trivy image princecharu/my_app:${BUILD_NUMBER}'
+            }
+        }
+
+        stage( 'AWS ECR Login' ) {
+            steps {
+                sh '''
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin $ECR_REPO
+                '''
+            } 
+        }
+        stage('Push Image to AWS ECR') {
+            steps {
+                sh '''
+                    docker tag princecharu/my_app:${BUILD_NUMBER} ${ECR_REPO}:latest
+                    docker tag princecharu/my_app:${BUILD_NUMBER} ${ECR_REPO}:${BUILD_NUMBER}
+                    docker push ${ECR_REPO}:latest
+                    docker push ${ECR_REPO}:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage('Update Kubernetes Deployment Manifest File') {
+            environment {
+                GIT_REPO_NAME = "real_time_ci_cdelivery_ansible"
+                GIT_USER_NAME = "pichuka123"
+            }
+            steps {
+                withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        git config user.email "prince.charu7@gmail.com"
+                        git config user.name "pichuka123"
+
+                        sed -i "s|my_app:.*|my_app:${BUILD_NUMBER}|g" Ansible/k8s_deployment.yaml
+
+                        git add .
+                        git commit -m "Update deployment image tag to version ${BUILD_NUMBER}"
+                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                    '''
+                }
+            }
+        }
+
+        stage('K8s Deployment using Ansible') {
+            steps {
+                script {
+                    ansiblePlaybook(
+                        credentialsId: 'ssh',
+                        disableHostKeyChecking: true,
+                        installation: 'ansible',
+                        inventory: '/etc/ansible/inventory',
+                        playbook: 'Ansible/ansible_k8s_deploy_playbook.yaml'
+                    )
+                }
+            }
+        }
+    }
+}
