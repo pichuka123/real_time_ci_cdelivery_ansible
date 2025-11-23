@@ -63,7 +63,7 @@ pipeline {
 
 
        // since Docker needs to authenticate to ECR before pushing/pulling images, 
-       // we need authentication step for Docker to AWS ECR
+       // we need authentication step for Docker to AWS ECR.
         stage('AWS ECR Login') {
             steps {
                 withCredentials([
