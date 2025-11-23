@@ -2,7 +2,7 @@
 10.0.1.224 ansible_user=ec2-user
 
 
-#10.0.1.224 ansible_ssh_private_key_file=/etc/ansible/id_rsa ansible_user=ec2-user
+# 10.0.1.224 ansible_ssh_private_key_file=/etc/ansible/id_rsa ansible_user=ec2-user
 # this is when you try to include id_rsa (privatekey) in jenkins/utils server's /etc/ansible/id_rsa
 # and try to deploy, but it will fail eventually due to poor id_rsa file permissions 600/644 which
 # jenkins pipeline is not allowing.

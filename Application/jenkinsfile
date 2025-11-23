@@ -3,8 +3,9 @@ pipeline {
     environment {
         AWS_REGION = "us-east-1"
         ECR_REPO = "932805744054.dkr.ecr.us-east-1.amazonaws.com/my_app"
-        IMAGE = "my_app"
-        
+        IMAGE = "my_app"    
+        INVENTORY = '/etc/ansible/inventory'
+        PLAYBOOK = 'Ansible/ansible_k8s_deploy_playbook.yaml' 
     }
 
     tools {
@@ -115,16 +116,16 @@ pipeline {
 
         
         stage('K8s Deployment using Ansible') {
-            steps {
-                ansiblePlaybook(
-                    credentialsId: 'ansible-ssh-key',
-                    disableHostKeyChecking: true,
-                    installation: 'ansible',
-                    inventory: '/etc/ansible/inventory',
-                    playbook: 'Ansible/ansible_k8s_deploy_playbook.yaml'
-                )
+                    steps {
+                        sshagent(['ansible-ssh-key']) {
+                            sh '''
+                                # Run the playbook using SSH agent
+                                ansible-playbook -i ${INVENTORY} ${PLAYBOOK} \
+                                --ssh-extra-args='-o StrictHostKeyChecking=no'
+                            '''
+                        }
+                    }
             }
-        }
     }
 }
 
