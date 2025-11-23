@@ -48,19 +48,19 @@ pipeline {
             }
         }
                 
-        stage('Trivy Scan') {
-            options { timeout(time: 30, unit: 'MINUTES') }
-            steps {
-                sh '''
-                    mkdir -p /var/lib/jenkins/.cache/trivy
+       // stage('Trivy Scan') {
+       //     options { timeout(time: 30, unit: 'MINUTES') }
+       //     steps {
+       //         sh '''
+       //             mkdir -p /var/lib/jenkins/.cache/trivy
 
-                    # Scan image using local Trivy installation
-                    trivy image --skip-update --timeout 30m \
-                        --cache-dir /var/lib/jenkins/.cache/trivy \
-                        princecharu/my_app:${BUILD_NUMBER}
-                '''
-            }
-        }
+        //            # Scan image using local Trivy installation
+       //             trivy image --skip-update --timeout 30m \
+       //                 --cache-dir /var/lib/jenkins/.cache/trivy \
+       //                 princecharu/my_app:${BUILD_NUMBER}
+       //         '''
+      //      }
+      //  }
 
 
        // since Docker needs to authenticate to ECR before pushing/pulling images, 
