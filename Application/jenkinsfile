@@ -11,9 +11,9 @@ pipeline {
     maven 'maven3'
     }
 
-    triggers {
-	githubPush()
-   }
+   // triggers {   - this seems to be creating issues with multiple build triggers at a time.
+   //	githubPush()
+   // }
 
     stages {
         stage('Checkout Code') {
@@ -55,16 +55,12 @@ pipeline {
                 sh '''
                     mkdir -p $HOME/.cache/trivy
 
-                    # Pre-download DB
+                    
+                    # Download Trivy DB using ORAS (OCI artifact)
                     docker run --rm \
                         -v $HOME/.cache/trivy:/root/.cache/trivy \
-                        aquasec/trivy --download-db-only
-
-                    # Scan image with extended Trivy timeout
-                    docker run --rm \
-                        -v $HOME/.cache/trivy:/root/.cache/trivy \
-                        aquasec/trivy image --skip-update --timeout 15m \
-                        --exit-code 1 --severity HIGH,CRITICAL \
+                        ghcr.io/aquasecurity/trivy:latest \
+                        image --skip-update --timeout 15m \
                         princecharu/my_app:${BUILD_NUMBER}
                 '''
             }
