@@ -20,6 +20,13 @@ resource "aws_security_group" "jenkins_sg" {
   }
 
   ingress {
+    from_port   = 9000
+    to_port     = 9000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -42,9 +49,8 @@ resource "aws_security_group" "jenkins_sg" {
 
 resource "aws_security_group" "myapp_sg" {
   name        = "myapp-sg"
-  vpc_id      = aws_vpc.prod.id
+  vpc_id      = var.vpc_id   # ✅ Use variable instead of aws_vpc.prod.id
   description = "MyApp SG"
-
 
   ingress {
   description = "MyApp HTTP"
@@ -91,6 +97,15 @@ resource "aws_instance" "jenkins" {
   subnet_id     = var.public_subnet_id
   key_name      = aws_key_pair.key_pair.key_name
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+  associate_public_ip_address = true  # ✅ Ensure public IP is assigned
+  
+connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ec2-user"
+    private_key = file(var.private_key_path)
+  }
+
 
   provisioner "remote-exec" {
     inline = [
@@ -113,12 +128,12 @@ resource "aws_instance" "jenkins" {
 
 
 # ------------------------- MyApp Instance -------------------------
+
 resource "aws_instance" "myapp" {
   ami                    = "ami-0fa3fe0fa7920f68e"
   instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.public_subnet.id
+  subnet_id              = var.public_subnet_id   # ✅ Use variable instead of aws_subnet.public_subnet.id
   key_name               = aws_key_pair.key_pair.key_name
   vpc_security_group_ids = [aws_security_group.myapp_sg.id]
-
   tags = { Name = "MyApp-by-Terraform" }
 }

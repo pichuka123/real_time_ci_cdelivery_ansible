@@ -24,8 +24,4 @@ module "eks" {
   }
 }
 
-``variables.tf**
-```hcl
-variable "cluster_name" {}
-variable "subnet_ids" {}
-variable "vpc_id" {}
+

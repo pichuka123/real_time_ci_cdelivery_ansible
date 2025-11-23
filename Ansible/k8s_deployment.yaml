@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: hello-app
-        image: princecharu/k8s:13
+        image: princecharu/my_app:13
         ports:
         - containerPort: 8080
 ---
