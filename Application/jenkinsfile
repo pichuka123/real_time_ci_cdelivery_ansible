@@ -47,28 +47,21 @@ pipeline {
                 }
             }
         }
-        
-        
+                
         stage('Trivy Scan') {
-            options { timeout(time: 20, unit: 'MINUTES') } // Jenkins stage timeout
+            options { timeout(time: 30, unit: 'MINUTES') }
             steps {
                 sh '''
-                    mkdir -p $HOME/.cache/trivy/db
+                    mkdir -p /var/lib/jenkins/.cache/trivy
 
-                    # Pre-populate DB using OCI artifact              
-                    oras pull ghcr.io/aquasecurity/trivy-db:2
-                    tar -xzf db.tar.gz
-                    cp trivy.db metadata.json $HOME/.cache/trivy/db/
-
-                    # Scan image without DB update
-                    docker run --rm \
-                        -v $HOME/.cache/trivy:/root/.cache/trivy \
-                        ghcr.io/aquasecurity/trivy:latest \
-                        image --skip-update --timeout 30m \
+                    # Scan image using local Trivy installation
+                    trivy image --skip-update --timeout 30m \
+                        --cache-dir /var/lib/jenkins/.cache/trivy \
                         princecharu/my_app:${BUILD_NUMBER}
                 '''
             }
         }
+
 
        // since Docker needs to authenticate to ECR before pushing/pulling images, 
        // we need authentication step for Docker to AWS ECR
