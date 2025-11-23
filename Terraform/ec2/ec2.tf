@@ -119,7 +119,7 @@ connection {
       "sudo usermod -aG docker jenkins",
       "sudo chmod 666 /var/run/docker.sock",
       "sudo docker run -d --name sonar -p 9000:9000 sonarqube",
-      "sudo rpm -ivh https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.rpm"
+      "sudo rpm -ivh https://github.com/aquasecurity/trivy/releases/download/v0.67.2/trivy_0.67.2_Linux-64bit.rpm"
     ]
   }
 
