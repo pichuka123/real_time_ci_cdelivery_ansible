@@ -48,26 +48,28 @@ pipeline {
             }
         }
         
+        
         stage('Trivy Scan') {
-            options { timeout(time: 15, unit: 'MINUTES') } // Increase timeout for first DB download
+            options { timeout(time: 20, unit: 'MINUTES') } // Jenkins stage timeout
             steps {
                 sh '''
-                    # Create cache directory for Trivy DB
                     mkdir -p $HOME/.cache/trivy
 
-                    # Pre-download Trivy DB (only if not cached)
+                    # Pre-download DB
                     docker run --rm \
                         -v $HOME/.cache/trivy:/root/.cache/trivy \
                         aquasec/trivy --download-db-only
 
-                    # Scan Docker image with cached DB and skip update
+                    # Scan image with extended Trivy timeout
                     docker run --rm \
                         -v $HOME/.cache/trivy:/root/.cache/trivy \
-                        aquasec/trivy image --skip-update --exit-code 1 --severity HIGH,CRITICAL \
-                        princecharu/my_app:${BUILD_NUMBER}'
+                        aquasec/trivy image --skip-update --timeout 15m \
+                        --exit-code 1 --severity HIGH,CRITICAL \
+                        princecharu/my_app:${BUILD_NUMBER}
                 '''
             }
         }
+
 
         
      
