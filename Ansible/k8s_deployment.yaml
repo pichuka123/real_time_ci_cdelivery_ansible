@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: hello-app
-        image: princecharu/my_app:55
+        image: princecharu/my_app:56
         ports:
         - containerPort: 8080
 ---
