@@ -48,7 +48,7 @@
         mode: '0600'
         owner: ec2-user
       when: not kubeconfig_stat.stat.exists
-      # If kubeconfig is already on remote, use:
+      # If kubeconfig is already on remote, use::
       # remote_src: yes
 
     - name: Apply Kubernetes deployment
