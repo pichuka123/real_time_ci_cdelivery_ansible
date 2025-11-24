@@ -19,11 +19,6 @@
         state: directory
         owner: ec2-user
         mode: '0700'
-
-    - name: Install AWS CLI
-      yum:
-        name: awscli
-        state: present
     
     - name: Check if kubectl is installed
       command: which kubectl
