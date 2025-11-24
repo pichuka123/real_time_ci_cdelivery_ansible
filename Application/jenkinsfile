@@ -35,8 +35,8 @@ pipeline {
                 sh '''
                     cd Application
                     mvn sonar:sonar \
-                      -Dsonar.host.url=http://13.219.92.60:9000 \
-                      -Dsonar.login=squ_383233ed2aae9064a669cc5e10872429763d882c
+                      -Dsonar.host.url=http://18.234.208.239:9000 \
+                      -Dsonar.login=squ_fece8be32f713cae632ad1492977593978bfb003
                 '''
             }
         }
@@ -67,7 +67,7 @@ pipeline {
         stage('AWS ECR Login') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'aws-creds', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-creds-secret-key', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'aws-creds-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     sh '''
@@ -116,11 +116,15 @@ pipeline {
         
         stage('K8s Deployment using Ansible') {
                     steps {
-                        sshagent(['ansible-ssh-key']) {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'deploy-key',
+                                          keyFileVariable: 'KEYFILE',
+                                          usernameVariable: 'DEPLOY_USER')]) {
+                            sh 'chmod 600 $KEYFILE'
                             sh '''
-                                # Run the playbook using SSH agent
+                                # Run the playbook to deploy to Kubernetes cluster
                                 ansible-playbook -i ${INVENTORY} ${PLAYBOOK} \
-                                --ssh-extra-args='-o StrictHostKeyChecking=no'
+                                --user $DEPLOY_USER --private-key $KEYFILE \
+                                --ssh-common-args '-o StrictHostKeyChecking=no -o IdentitiesOnly=yes'
                             '''
                         }
                     }
