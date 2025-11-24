@@ -1,13 +1,4 @@
 ---
-
-
-- name: Generate kubeconfig for EKS
-  command: aws eks update-kubeconfig --region us-east-1 --name eks-cluster
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ aws-creds-secret-key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ aws-creds-secret-access-key }}"
-    AWS_DEFAULT_REGION: "us-east-1"
-
 - name: Deploy application into EKS cluster
   hosts: appserver
   gather_facts: no
