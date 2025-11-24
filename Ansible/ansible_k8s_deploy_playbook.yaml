@@ -5,51 +5,52 @@
   become: yes
   
   vars:
+    region: us-east-1
+    cluster_name: eks-cluster
     kubeconfig_path: /home/ec2-user/.kube/config
     deployment_file: /home/ec2-user/k8s_deployment.yaml
-    kubectl_version: "v1.29.0"  # Change to your desired version
+    kubectl_version: "v1.29.0"
+
 
   tasks:
-
     - name: Ensure .kube directory exists
       file:
         path: /home/ec2-user/.kube
         state: directory
         owner: ec2-user
         mode: '0700'
+
+    - name: Install AWS CLI
+      yum:
+        name: awscli
+        state: present
     
-    - name: Install kubectl if not present
+    - name: Check if kubectl is installed
       command: which kubectl
       register: kubectl_check
       ignore_errors: yes
-    
-    - name: Download kubectl binary
+
+
+    - name: Download kubectl binary if missing 
       get_url:
         url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
         dest: /usr/local/bin/kubectl
         mode: '0755'
       when: kubectl_check.rc != 0
 
+      
+    - name: Generate kubeconfig for EKS
+      command: aws eks update-kubeconfig --region {{ region }} --name {{ cluster_name }}
+      environment:
+        AWS_DEFAULT_REGION: "{{ region }}"
+      become_user: ec2-user
+
+
     - name: Copy Kubernetes deployment file to app server
       copy:
         src: "{{ playbook_dir }}/k8s_deployment.yaml"
         dest: "{{ deployment_file }}"
         mode: '0644'
-
-    - name: Check if kubeconfig exists on remote host
-      stat:
-        path: /home/ec2-user/.kube
-      register: kubeconfig_stat
-
-    - name: Copy kubeconfig to target if missing
-      copy:
-        src: "/home/ec2-user/.kube/config"
-        dest: /home/ec2-user/.kube/config
-        mode: '0600'
-        owner: ec2-user
-      when: not kubeconfig_stat.stat.exists
-      # If kubeconfig is already on remote, use::
-      # remote_src: yes
 
     - name: Apply Kubernetes deployment
       command: kubectl apply -f "{{ deployment_file }}"
