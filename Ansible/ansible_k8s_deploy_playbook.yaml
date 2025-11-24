@@ -3,29 +3,59 @@
   hosts: appserver
   gather_facts: no
   become: yes
+  
+  vars:
+    kubeconfig_path: /home/ec2-user/.kube/config
+    deployment_file: /home/ec2-user/k8s_deployment.yaml
+    kubectl_version: "v1.29.0"  # Change to your desired version
 
   tasks:
+
+    - name: Ensure .kube directory exists
+      file:
+        path: /home/ec2-user/.kube
+        state: directory
+        owner: ec2-user
+        mode: '0700'
+    
+    - name: Install kubectl if not present
+      command: which kubectl
+      register: kubectl_check
+      ignore_errors: yes
+    
+    - name: Download kubectl binary
+      get_url:
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+      when: kubectl_check.rc != 0
 
     - name: Copy Kubernetes deployment file to app server
       copy:
         src: "{{ playbook_dir }}/k8s_deployment.yaml"
-        dest: /home/ec2-user/k8s_deployment.yaml
+        dest: "{{ deployment_file }}"
         mode: '0644'
 
     - name: Check if kubeconfig exists on remote host
       stat:
-        path: /home/ec2-user/.kube/config
+        path: "{{ deployment_file }}"
       register: kubeconfig_stat
 
     - name: Copy kubeconfig to target if missing
       copy:
         src: "{{ playbook_dir }}/kubeconfig"
-        dest: /home/ec2-user/.kube/config
+        dest: "{{ kubeconfig_path }}"
         mode: '0600'
         owner: ec2-user
       when: not kubeconfig_stat.stat.exists
+      # If kubeconfig is already on remote, use:
+      # remote_src: yes
 
     - name: Apply Kubernetes deployment
-      command: kubectl apply -f /home/ec2-user/k8s_deployment.yaml
+      command: kubectl apply -f "{{ deployment_file }}"
       environment:
-        KUBECONFIG: /home/ec2-user/.kube/config
+        KUBECONFIG: "{{ kubeconfig_path }}"
+
+
+
+
