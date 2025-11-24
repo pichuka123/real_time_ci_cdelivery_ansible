@@ -38,13 +38,13 @@
 
     - name: Check if kubeconfig exists on remote host
       stat:
-        path: "{{ deployment_file }}"
+        path: /home/ec2-user/.kube/config
       register: kubeconfig_stat
 
     - name: Copy kubeconfig to target if missing
       copy:
         src: "{{ playbook_dir }}/kubeconfig"
-        dest: "{{ kubeconfig_path }}"
+        dest: /home/ec2-user/.kube/config
         mode: '0600'
         owner: ec2-user
       when: not kubeconfig_stat.stat.exists
